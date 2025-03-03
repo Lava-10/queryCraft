@@ -1,0 +1,6 @@
+[package]
+name = "sql_engine"
+version = "0.1.0"
+edition = "2021"
+description = "A toy SQL engine featuring a complete SQL processing pipeline (tokenization, parsing, analysis, optimization, and preparation)."
+
