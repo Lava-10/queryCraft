@@ -8,20 +8,34 @@ import {
   Grid,
   CircularProgress,
   Alert,
+  Tabs,
+  Tab,
 } from '@mui/material';
 import { PlayArrow as PlayArrowIcon } from '@mui/icons-material';
 import { useQuery } from 'react-query';
+import QueryPipeline from './QueryPipeline';
 
 interface QueryResult {
-  columns: string[];
-  rows: any[];
-  executionTime: number;
+  result: {
+    columns: string[];
+    rows: any[];
+    executionTime: number;
+  };
+  pipeline: {
+    tokenization: any;
+    parsing: any;
+    analysis: any;
+    optimization: any;
+    preparation: any;
+    execution: any;
+  };
   error?: string;
 }
 
 const SQLEditor: React.FC = () => {
   const [query, setQuery] = useState('SELECT * FROM users;');
   const [isExecuting, setIsExecuting] = useState(false);
+  const [activeTab, setActiveTab] = useState(0);
 
   const { data: result, error, refetch } = useQuery<QueryResult>(
     ['executeQuery', query],
@@ -54,6 +68,49 @@ const SQLEditor: React.FC = () => {
   const handleExecuteQuery = () => {
     refetch();
   };
+
+  const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
+    setActiveTab(newValue);
+  };
+
+  const pipelineSteps = result?.pipeline ? [
+    {
+      name: 'Tokenization',
+      description: 'Breaking down the SQL query into tokens',
+      data: result.pipeline.tokenization,
+      status: result.pipeline.tokenization ? 'completed' : 'pending'
+    },
+    {
+      name: 'Parsing',
+      description: 'Converting tokens into an Abstract Syntax Tree (AST)',
+      data: result.pipeline.parsing,
+      status: result.pipeline.parsing ? 'completed' : 'pending'
+    },
+    {
+      name: 'Analysis',
+      description: 'Semantic analysis and validation',
+      data: result.pipeline.analysis,
+      status: result.pipeline.analysis ? 'completed' : 'pending'
+    },
+    {
+      name: 'Optimization',
+      description: 'Query optimization and transformation',
+      data: result.pipeline.optimization,
+      status: result.pipeline.optimization ? 'completed' : 'pending'
+    },
+    {
+      name: 'Preparation',
+      description: 'Final query preparation and validation',
+      data: result.pipeline.preparation,
+      status: result.pipeline.preparation ? 'completed' : 'pending'
+    },
+    {
+      name: 'Execution',
+      description: 'Query execution and result generation',
+      data: result.pipeline.execution,
+      status: result.pipeline.execution ? 'completed' : 'pending'
+    }
+  ] : [];
 
   return (
     <Box sx={{ height: '100%', display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -94,36 +151,49 @@ const SQLEditor: React.FC = () => {
 
       {result && (
         <Paper sx={{ p: 2 }}>
-          <Typography variant="h6" gutterBottom>
-            Results
-          </Typography>
-          <Typography variant="body2" color="text.secondary" gutterBottom>
-            Execution time: {result.executionTime}ms
-          </Typography>
-          <Box sx={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead>
-                <tr>
-                  {result.columns.map((column) => (
-                    <th key={column} style={{ padding: '8px', textAlign: 'left', borderBottom: '1px solid #ddd' }}>
-                      {column}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {result.rows.map((row, rowIndex) => (
-                  <tr key={rowIndex}>
-                    {result.columns.map((column) => (
-                      <td key={column} style={{ padding: '8px', borderBottom: '1px solid #ddd' }}>
-                        {row[column]}
-                      </td>
+          <Tabs value={activeTab} onChange={handleTabChange} sx={{ mb: 2 }}>
+            <Tab label="Results" />
+            <Tab label="Execution Pipeline" />
+          </Tabs>
+
+          {activeTab === 0 && (
+            <>
+              <Typography variant="h6" gutterBottom>
+                Results
+              </Typography>
+              <Typography variant="body2" color="text.secondary" gutterBottom>
+                Execution time: {result.result.executionTime}ms
+              </Typography>
+              <Box sx={{ overflowX: 'auto' }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                  <thead>
+                    <tr>
+                      {result.result.columns.map((column) => (
+                        <th key={column} style={{ padding: '8px', textAlign: 'left', borderBottom: '1px solid #ddd' }}>
+                          {column}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {result.result.rows.map((row, rowIndex) => (
+                      <tr key={rowIndex}>
+                        {result.result.columns.map((column) => (
+                          <td key={column} style={{ padding: '8px', borderBottom: '1px solid #ddd' }}>
+                            {row[column]}
+                          </td>
+                        ))}
+                      </tr>
                     ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </Box>
+                  </tbody>
+                </table>
+              </Box>
+            </>
+          )}
+
+          {activeTab === 1 && (
+            <QueryPipeline steps={pipelineSteps} />
+          )}
         </Paper>
       )}
     </Box>
